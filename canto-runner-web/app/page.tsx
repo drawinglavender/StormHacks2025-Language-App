@@ -1,144 +1,90 @@
+"use client";
+
 import Image from "next/image";
-import Link from "next/link"; // <-- import Link from Next.js
-
-// export default function Home() {
-//   return (
-//     <div className="font-sans grid grid-rows-[20px_1fr_20px] items-center justify-items-center min-h-screen p-8 pb-20 gap-16 sm:p-20">
-//       <main className="flex flex-col gap-[32px] row-start-2 items-center sm:items-start">
-//         <Image
-//           className="dark:invert"
-//           src="/next.svg"
-//           alt="Next.js logo"
-//           width={180}
-//           height={38}
-//           priority
-//         />
-//         <ol className="font-mono list-inside list-decimal text-sm/6 text-center sm:text-left">
-//           <li className="mb-2 tracking-[-.01em]">
-//             Get started by editing{" "}
-//             <code className="bg-black/[.05] dark:bg-white/[.06] font-mono font-semibold px-1 py-0.5 rounded">
-//               app/page.tsx
-//             </code>
-//             .
-//           </li>
-//           <li className="tracking-[-.01em]">
-//             Save and see your changes instantly.
-//           </li>
-//         </ol>
-
-//         <div className="flex gap-4 items-center flex-col sm:flex-row">
-//           <a
-//             className="rounded-full border border-solid border-transparent transition-colors flex items-center justify-center bg-foreground text-background gap-2 hover:bg-[#383838] dark:hover:bg-[#ccc] font-medium text-sm sm:text-base h-10 sm:h-12 px-4 sm:px-5 sm:w-auto"
-//             href="https://vercel.com/new?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-//             target="_blank"
-//             rel="noopener noreferrer"
-//           >
-//             <Image
-//               className="dark:invert"
-//               src="/vercel.svg"
-//               alt="Vercel logomark"
-//               width={20}
-//               height={20}
-//             />
-//             Deploy now
-//           </a>
-//           <a
-//             className="rounded-full border border-solid border-black/[.08] dark:border-white/[.145] transition-colors flex items-center justify-center hover:bg-[#f2f2f2] dark:hover:bg-[#1a1a1a] hover:border-transparent font-medium text-sm sm:text-base h-10 sm:h-12 px-4 sm:px-5 w-full sm:w-auto md:w-[158px]"
-//             href="https://nextjs.org/docs?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-//             target="_blank"
-//             rel="noopener noreferrer"
-//           >
-//             Read our docs
-//           </a>
-
-//           {/* <-- Add this Play Game button */}
-//           <Link href="/game">
-//             <button className="rounded-full bg-blue-600 text-white hover:bg-blue-700 font-medium text-sm sm:text-base h-10 sm:h-12 px-4 sm:px-5 w-full sm:w-auto md:w-[158px]">
-//               Play Game
-//             </button>
-//           </Link>
-//         </div>
-//       </main>
-
-//             <Link href="/translate">
-//         <button className="rounded-full bg-green-600 text-white hover:bg-green-700 font-medium text-sm sm:text-base h-10 sm:h-12 px-4 sm:px-5 w-full sm:w-auto md:w-[158px]">
-//           Translate
-//         </button>
-//       </Link>
-
-
-//       <footer className="row-start-3 flex gap-[24px] flex-wrap items-center justify-center">
-//         <a
-//           className="flex items-center gap-2 hover:underline hover:underline-offset-4"
-//           href="https://nextjs.org/learn?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-//           target="_blank"
-//           rel="noopener noreferrer"
-//         >
-//           <Image
-//             aria-hidden
-//             src="/file.svg"
-//             alt="File icon"
-//             width={16}
-//             height={16}
-//           />
-//           Learn
-//         </a>
-//         <a
-//           className="flex items-center gap-2 hover:underline hover:underline-offset-4"
-//           href="https://vercel.com/templates?framework=next.js&utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-//           target="_blank"
-//           rel="noopener noreferrer"
-//         >
-//           <Image
-//             aria-hidden
-//             src="/window.svg"
-//             alt="Window icon"
-//             width={16}
-//             height={16}
-//           />
-//           Examples
-//         </a>
-//         <a
-//           className="flex items-center gap-2 hover:underline hover:underline-offset-4"
-//           href="https://nextjs.org?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-//           target="_blank"
-//           rel="noopener noreferrer"
-//         >
-//           <Image
-//             aria-hidden
-//             src="/globe.svg"
-//             alt="Globe icon"
-//             width={16}
-//             height={16}
-//           />
-//           Go to nextjs.org →
-//         </a>
-//       </footer>
-//     </div>
-//   );
-// }
-
+import Link from "next/link";
+import { useState } from "react";
+import { Sun, Moon } from 'lucide-react';
 
 export default function Home() {
-  return (
-    <div className="min-h-screen flex items-center justify-center bg-gray-50 dark:bg-gray-900 px-6">
-      <div className="bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-2xl shadow-lg p-8 max-w-xl w-full text-center">
-        <h1 className="text-3xl font-bold mb-4 text-gray-900 dark:text-white">Welcome to Canto Runner!</h1>
-        <p className="text-gray-600 dark:text-gray-300 mb-6">
-          Learn your language through games, flashcards, and real-time translation.
-        </p>
+  const [darkMode, setDarkMode] = useState(false); // Default to light mode
 
-        <div className="flex flex-col sm:flex-row justify-center gap-4">
-          <Link href="/game">
-            <button className="w-full sm:w-auto rounded-full bg-blue-600 text-white hover:bg-blue-700 font-medium text-sm sm:text-base h-10 sm:h-12 px-4 sm:px-5">
-              Play Game
-            </button>
-          </Link>
-          <Link href="/translate">
-            <button className="w-full sm:w-auto rounded-full bg-green-600 text-white hover:bg-green-700 font-medium text-sm sm:text-base h-10 sm:h-12 px-4 sm:px-5">
-              Quick Start
-            </button>
-          </Link>
+  // Theme classes matching translate page
+  const bgColor = darkMode ? 'bg-gray-900' : 'bg-gray-50';
+  const cardBg = darkMode ? 'bg-gray-800' : 'bg-white';
+  const textColor = darkMode ? 'text-gray-100' : 'text-gray-900';
+  const mutedColor = darkMode ? 'text-gray-400' : 'text-gray-600';
+  const borderColor = darkMode ? 'border-gray-700' : 'border-gray-200';
+
+  return (
+    <div className={`min-h-screen ${bgColor} ${textColor} transition-colors duration-300`}>
+      {/* Header with NL logo and toggle */}
+      <header className={`${cardBg} border-b ${borderColor} p-4`}>
+        <div className="max-w-7xl mx-auto flex items-center justify-between">
+          <div className="flex items-center space-x-3">
+            <div className="w-10 h-10 bg-gradient-to-br from-[#639BFF] to-[#326BD0] rounded-lg flex items-center justify-center">
+              <span className="text-white font-bold text-xl">NL</span>
+            </div>
+            <h1 className="text-2xl font-bold bg-gradient-to-r from-[#639BFF] to-[#326BD0] bg-clip-text text-transparent">
+              NativeLeap
+            </h1>
+          </div>
+          
+          <button
+            onClick={() => setDarkMode(!darkMode)}
+            className={`p-2 rounded-lg ${darkMode ? 'bg-gray-700 hover:bg-gray-600' : 'bg-gray-200 hover:bg-gray-300'} transition-colors`}
+          >
+            {darkMode ? <Sun className="w-5 h-5" /> : <Moon className="w-5 h-5" />}
+          </button>
+        </div>
+      </header>
+
+      {/* Main content */}
+      <div className="flex items-center justify-center px-6 py-16">
+        <div className={`${cardBg} border ${borderColor} rounded-3xl shadow-xl p-10 max-w-2xl w-full text-center`}>
+          {/* Logo/Icon - Updated to match header colors */}
+          <div className="w-16 h-16 mx-auto mb-6 bg-gradient-to-br from-[#639BFF] to-[#326BD0] rounded-lg flex items-center justify-center">
+            <span className="text-white font-bold text-xl">NL</span>
+          </div>
+
+          {/* Title */}
+          <h1 className="text-4xl font-bold mb-4 bg-gradient-to-r from-[#639BFF] to-[#326BD0] bg-clip-text text-transparent">
+            Native Leap
+          </h1>
+          
+          {/* Subtitle */}
+          <p className={`text-lg ${mutedColor} mb-8 leading-relaxed`}>
+            Master Cantonese through interactive games, smart flashcards, and real-time translation with voice recognition.
+          </p>
+
+          {/* Action Buttons */}
+          <div className="flex flex-col sm:flex-row justify-center gap-4 mb-8">
+            <Link href="/translate">
+              <button className="w-full sm:w-auto rounded-xl bg-gradient-to-r from-blue-500 to-blue-600 hover:from-blue-600 hover:to-blue-700 text-white font-semibold text-base h-12 px-8 transition-all duration-300 shadow-lg hover:shadow-xl hover:scale-105">
+                Start Learning
+              </button>
+            </Link>
+            <Link href="/game">
+              <button className={`w-full sm:w-auto rounded-xl ${cardBg} border-2 ${borderColor} hover:border-blue-300 dark:hover:border-blue-500 ${textColor} font-semibold text-base h-12 px-8 transition-all duration-300 hover:shadow-lg`}>
+                Play Games
+              </button>
+            </Link>
+          </div>
+
+          {/* Features */}
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-4 text-center">
+            <div className="p-4">
+              <h3 className={`font-semibold ${textColor} mb-2`}>Voice Recognition</h3>
+              <p className={`text-sm ${mutedColor}`}>Speak naturally and get instant translations</p>
+            </div>
+            <div className="p-4">
+              <h3 className={`font-semibold ${textColor} mb-2`}>Smart Flashcards</h3>
+              <p className={`text-sm ${mutedColor}`}>Learn vocabulary with spaced repetition</p>
+            </div>
+            <div className="p-4">
+              <h3 className={`font-semibent ${textColor} mb-2`}>Interactive Games</h3>
+              <p className={`text-sm ${mutedColor}`}>Practice through fun mini-games</p>
+            </div>
+          </div>
         </div>
       </div>
     </div>

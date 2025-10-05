@@ -1,7 +1,7 @@
 "use client";
 
 import { useState, useRef, useEffect, useCallback } from "react";
-import { Mic, Copy, Star, Download, History, BookOpen, Sun, Moon, Check } from 'lucide-react';
+import { Mic, Copy, Star, Download, History, BookOpen, Sun, Moon, Check, ArrowLeft } from 'lucide-react';
 import { speechToText } from "../../utils/elevenlabs";
 import { translateToCantonese } from "../../utils/translator";
 // Fixed paths - go up 2 levels from app/translate/ to root, then into components/translator/
@@ -409,6 +409,21 @@ const bgColor = darkMode ? 'bg-gray-900' : 'bg-gray-50'; const cardBg = darkMode
             clearHistory={clearHistory}
           />
         )}
+
+        {/* Back Button - ADD THIS */}
+        <div className="fixed bottom-6 left-6 z-50">
+          <button
+            onClick={() => window.location.href = '/'}
+            className={`flex items-center space-x-2 px-4 py-2 rounded-full shadow-lg transition-all duration-300 ${
+              darkMode 
+                ? 'bg-gray-800 hover:bg-gray-700 text-gray-300 hover:text-[#639BFF] border border-gray-600 hover:border-[#639BFF]' 
+                : 'bg-white hover:bg-gray-50 text-gray-600 hover:text-[#326BD0] border border-gray-200 hover:border-[#326BD0]'
+            } hover:shadow-xl hover:scale-105`}
+          >
+            <ArrowLeft className="w-4 h-4" />
+            <span className="text-sm font-medium">Home</span>
+          </button>
+        </div>
       </main>
     </div>
   );
