@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useRef } from "react";
+import { useState, useRef, useEffect, useCallback } from "react";
 import { Mic, Copy, Star, Download, History, BookOpen, Sun, Moon, Check } from 'lucide-react';
 import { speechToText } from "../../utils/elevenlabs";
 import { translateToCantonese } from "../../utils/translator";
@@ -29,14 +29,21 @@ export default function TranslatePage() {
   const [settings, setSettings] = useState({
     showJyutping: true,
     alternativeCount: 3,
-    speechLanguage: 'cantonese'
+    speechLanguage: 'cantonese',
+    audioQuality: 'standard'
   });
   const [copied, setCopied] = useState(false);
 
   // Recording functions - KEEP THESE
   const startRecording = async () => {
     try {
-      const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
+      const stream = await navigator.mediaDevices.getUserMedia({ 
+        audio: {
+          sampleRate: settings.audioQuality === 'high' ? 48000 : 24000,
+          echoCancellation: true,
+          noiseSuppression: true
+        }
+      });
       const mediaRecorder = new MediaRecorder(stream);
       mediaRecorderRef.current = mediaRecorder;
       chunksRef.current = [];
@@ -210,6 +217,73 @@ export default function TranslatePage() {
     }
   };
 
+  // Keyboard shortcuts handler
+  const handleKeyPress = useCallback((event: KeyboardEvent) => {
+    // Space bar for recording
+    if (event.code === 'Space' && event.target === document.body) {
+      event.preventDefault();
+      if (isRecording) {
+        stopRecording();
+      } else {
+        startRecording();
+      }
+    }
+    
+    // Ctrl + L to clear text
+    if (event.ctrlKey && event.key === 'l') {
+      event.preventDefault();
+      setTranscribedText('');
+    }
+    
+    // Ctrl + C to copy translation
+    if (event.ctrlKey && event.key === 'c' && translation) {
+      event.preventDefault();
+      copyToClipboard(translation.translated);
+    }
+  }, [isRecording, stopRecording, startRecording, translation, copyToClipboard]);
+
+  // Add useEffect for keyboard shortcuts
+  useEffect(() => {
+    document.addEventListener('keydown', handleKeyPress);
+    return () => {
+      document.removeEventListener('keydown', handleKeyPress);
+    };
+  }, [handleKeyPress]);
+
+  // Data management functions
+  const exportHistory = () => {
+    if (history.length === 0) {
+      alert('No history to export');
+      return;
+    }
+    
+    const historyData = {
+      exportDate: new Date().toISOString(),
+      translations: history.map(item => ({
+        original: item.original,
+        translated: item.translated,
+        timestamp: item.timestamp,
+        favorite: item.favorite
+      }))
+    };
+    
+    const blob = new Blob([JSON.stringify(historyData, null, 2)], { type: 'application/json' });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = `cantonese-history-${new Date().toISOString().split('T')[0]}.json`;
+    a.click();
+    URL.revokeObjectURL(url);
+  };
+
+  const clearHistory = () => {
+    if (confirm('Are you sure you want to clear all history? This cannot be undone.')) {
+      setHistory([]);
+      setTranslation(null);
+      alert('History cleared successfully');
+    }
+  };
+
   // Theme classes
   const bgColor = darkMode ? 'bg-gray-900' : 'bg-gray-50';
   const cardBg = darkMode ? 'bg-gray-800' : 'bg-white';
@@ -322,6 +396,8 @@ export default function TranslatePage() {
             textColor={textColor}
             mutedColor={mutedColor}
             borderColor={borderColor}
+            exportHistory={exportHistory}
+            clearHistory={clearHistory}
           />
         )}
       </main>

@@ -259,7 +259,9 @@ export default function TranslateTab({
                             <div className="flex items-center justify-between mb-1">
                               <div className="flex items-baseline gap-2">
                                 <span className="font-medium text-base">{word.word}</span>
-                                <span className={`${mutedColor} text-sm`}>({word.pronunciation})</span>
+                                {word.pronunciation && (
+                                  <span className={`${mutedColor} text-sm`}>({word.pronunciation})</span>
+                                )}
                               </div>
                               <button
                                 onClick={() => playAudio(word.word)}
@@ -304,7 +306,9 @@ export default function TranslateTab({
                                 <Volume2 className="w-3 h-3" />
                               </button>
                             </div>
-                            <p className={`${mutedColor} text-sm`}>{alt.jyutping}</p>
+                            {alt.jyutping && (
+                              <p className={`${mutedColor} text-sm`}>{alt.jyutping}</p>
+                            )}
                           </div>
                         ))}
                       </div>

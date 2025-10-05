@@ -5,6 +5,7 @@ interface SettingsTabProps {
     showJyutping: boolean;
     alternativeCount: number;
     speechLanguage: string;
+    audioQuality?: string;
   };
   setSettings: (settings: any) => void;
   darkMode: boolean;
@@ -12,6 +13,8 @@ interface SettingsTabProps {
   textColor: string;
   mutedColor: string;
   borderColor: string;
+  exportHistory: () => void;
+  clearHistory: () => void;
 }
 
 export default function SettingsTab({
@@ -21,7 +24,9 @@ export default function SettingsTab({
   cardBg,
   textColor,
   mutedColor,
-  borderColor
+  borderColor,
+  exportHistory,
+  clearHistory
 }: SettingsTabProps) {
   return (
     <div className={`${cardBg} rounded-2xl shadow-lg p-6 border ${borderColor} max-w-2xl mx-auto`}>
@@ -83,7 +88,8 @@ export default function SettingsTab({
                 type="radio"
                 name="audioQuality"
                 value="standard"
-                defaultChecked
+                checked={settings.audioQuality === 'standard'}
+                onChange={(e) => setSettings({...settings, audioQuality: e.target.value})}
                 className="mr-2 text-blue-500"
               />
               <span>Standard Quality (faster processing)</span>
@@ -93,6 +99,8 @@ export default function SettingsTab({
                 type="radio"
                 name="audioQuality"
                 value="high"
+                checked={settings.audioQuality === 'high'}
+                onChange={(e) => setSettings({...settings, audioQuality: e.target.value})}
                 className="mr-2 text-blue-500"
               />
               <span>High Quality (better accuracy)</span>
@@ -105,14 +113,18 @@ export default function SettingsTab({
           <h3 className="font-semibold mb-4">Data Management</h3>
           <div className="grid md:grid-cols-2 gap-3">
             <button
-              className={`py-2 px-4 ${darkMode ? 'bg-gray-700 hover:bg-gray-600' : 'bg-gray-200 hover:bg-gray-300'} rounded-lg transition-colors`}
+              onClick={exportHistory}
+              className={`py-2 px-4 ${darkMode ? 'bg-gray-700 hover:bg-gray-600' : 'bg-gray-200 hover:bg-gray-300'} rounded-lg transition-colors flex items-center justify-center space-x-2`}
             >
-              📥 Export History
+              <span>📥</span>
+              <span>Export History</span>
             </button>
             <button
-              className={`py-2 px-4 ${darkMode ? 'bg-gray-700 hover:bg-gray-600' : 'bg-gray-200 hover:bg-gray-300'} rounded-lg transition-colors`}
+              onClick={clearHistory}
+              className={`py-2 px-4 ${darkMode ? 'bg-red-700 hover:bg-red-600' : 'bg-red-200 hover:bg-red-300'} text-red-100 rounded-lg transition-colors flex items-center justify-center space-x-2`}
             >
-              🗑️ Clear History
+              <span>🗑️</span>
+              <span>Clear History</span>
             </button>
           </div>
         </div>
