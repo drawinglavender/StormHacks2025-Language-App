@@ -1,52 +1,93 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useRef } from "react";
+import { speechToText } from "../../utils/elevenlabs";
 
-export default function TranslatorPage() {
-  const [inputText, setInputText] = useState("");
-  const [translatedText, setTranslatedText] = useState("");
-  const [isTranslating, setIsTranslating] = useState(false);
+export default function TranslatePage() {
+  const [transcribedText, setTranscribedText] = useState("");
+  const [isRecording, setIsRecording] = useState(false);
+  const [isProcessing, setIsProcessing] = useState(false);
+  const mediaRecorderRef = useRef<MediaRecorder | null>(null);
+  const chunksRef = useRef<Blob[]>([]);
 
-  const handleTranslate = async () => {
-    setIsTranslating(true);
-
+  const startRecording = async () => {
     try {
-      // Replace this with your actual Eleven Labs API call
-      const fakeTranslated = `🈶 Translation of: "${inputText}"`;
-      await new Promise((resolve) => setTimeout(resolve, 1000)); // Simulate API latency
-      setTranslatedText(fakeTranslated);
+      const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
+      const mediaRecorder = new MediaRecorder(stream);
+      mediaRecorderRef.current = mediaRecorder;
+      chunksRef.current = [];
+
+      mediaRecorder.ondataavailable = (event) => {
+        chunksRef.current.push(event.data);
+      };
+
+      mediaRecorder.start();
+      setIsRecording(true);
     } catch (error) {
-      setTranslatedText("❌ Translation failed. Try again.");
-    } finally {
-      setIsTranslating(false);
+      console.error("Recording failed:", error);
+      const errorMessage = error instanceof Error ? error.message : "Unknown error occurred";
+      // You could add state to show this error to user if needed
+    }
+  };
+
+  const stopRecording = () => {
+    if (mediaRecorderRef.current) {
+      mediaRecorderRef.current.onstop = async () => {
+        const audioBlob = new Blob(chunksRef.current, { type: "audio/wav" });
+
+        console.log("Audio blob created:", { size: audioBlob.size, type: audioBlob.type });
+
+        setIsProcessing(true);
+        try {
+          const text = await speechToText(audioBlob);
+          console.log("Transcription result:", text);
+          setTranscribedText(text);
+        } catch (error) {
+          console.error("Transcription failed:", error);
+          const errorMessage = error instanceof Error ? error.message : "Unknown error occurred";
+          setTranscribedText("Transcription failed: " + errorMessage);
+        } finally {
+          setIsProcessing(false);
+        }
+
+        // Clean up
+        mediaRecorderRef.current?.stream.getTracks().forEach((track) => track.stop());
+      };
+
+      mediaRecorderRef.current.stop();
+      setIsRecording(false);
     }
   };
 
   return (
-    <div className="flex flex-col items-center justify-center min-h-screen bg-white p-6 text-center">
-      <h1 className="text-3xl font-bold mb-6">Chinglish Translator</h1>
+    <div className="max-w-md mx-auto p-6">
+      <h1 className="text-2xl font-bold mb-6">Voice Transcriber</h1>
 
-      <textarea
-        className="w-full max-w-lg h-32 border border-gray-300 rounded p-3 mb-4"
-        placeholder="Enter Chinglish here..."
-        value={inputText}
-        onChange={(e) => setInputText(e.target.value)}
-      />
+      <div className="mb-4">
+        <button
+          onClick={isRecording ? stopRecording : startRecording}
+          disabled={isProcessing}
+          className={`w-full py-3 px-4 rounded text-white font-medium ${
+            isRecording
+              ? "bg-red-500 hover:bg-red-600"
+              : "bg-blue-500 hover:bg-blue-600"
+          } disabled:opacity-50`}
+        >
+          {isRecording ? "Stop Recording" : "Start Recording"}
+        </button>
+      </div>
 
-      <button
-        onClick={handleTranslate}
-        disabled={isTranslating || inputText.trim() === ""}
-        className="bg-blue-600 hover:bg-blue-700 text-white font-semibold py-2 px-6 rounded disabled:opacity-50 mb-4"
-      >
-        {isTranslating ? "Translating..." : "Translate"}
-      </button>
+      {isProcessing && <p className="text-gray-600 mb-4">Processing audio...</p>}
 
-      {translatedText && (
-        <div className="w-full max-w-lg bg-gray-100 border border-gray-300 rounded p-4 text-left">
-          <h2 className="font-semibold mb-2">Translated Output:</h2>
-          <p>{translatedText}</p>
-        </div>
-      )}
+      <div className="mt-4">
+        <label className="block text-sm font-medium mb-2">Transcription:</label>
+        <textarea
+          value={transcribedText}
+          readOnly
+          className="w-full h-32 p-3 border rounded resize-none"
+          placeholder="Your speech will appear here..."
+        />
+      </div>
     </div>
   );
 }
