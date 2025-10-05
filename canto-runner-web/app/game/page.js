@@ -182,7 +182,7 @@ export default function GamePage() {
     <div className="w-screen h-screen bg-white">
       {stage === "home" && (
         <div className="flex flex-col justify-center items-center w-screen h-screen bg-white pt-20">
-          <h1 className="text-6xl font-bold mb-10 text-black">Kitty Quiz Runner</h1>
+          <h1 className="text-6xl font-bold mb-10 text-black">Canto Runner</h1>
           <button
             className="w-64 py-5 mb-7 bg-[#326BD0] hover:bg-[#12387D] text-white font-semibold text-2xl transition-colors rounded-lg"
             onClick={() => setStage("playing")}
@@ -201,7 +201,7 @@ export default function GamePage() {
                 <button className="absolute top-4 right-4 text-2xl font-bold text-black" onClick={() => setShowInstructions(false)}>✕</button>
                 <h2 className="text-3xl font-bold mb-6 text-black">HOW TO PLAY</h2>
                 <p className="text-xl mb-4 text-black">
-                  Welcome to Kitty Quiz Runner! Test your Cantonese while helping our kitty friend run across the bridge.
+                  Welcome to Canto Runner! Test your Cantonese while helping our kitty friend run across the bridge.
                 </p>
                 <p className="text-xl mb-4 text-black">
                   Blocks with possible answers move toward your kitty on the left. Use UP and DOWN arrow keys to move between lanes.
