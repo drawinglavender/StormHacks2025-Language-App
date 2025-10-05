@@ -2,7 +2,6 @@
 
 import { useEffect, useState } from "react";
 import * as Phaser from "phaser";
-import "./game.css";
 
 export default function GamePage() {
   const [stage, setStage] = useState("home");
@@ -22,6 +21,15 @@ export default function GamePage() {
     if (stage !== "playing") return;
 
     class GameScene extends Phaser.Scene {
+
+      preload() {
+        // Load bridge background and kitty sprites
+        this.load.image('bridge', '/trail.png');
+        this.load.image('kitty1', '/kitty1.png');
+        this.load.image('kitty2', '/kitty2.png');
+        this.load.image('background', '/background.png');
+      }
+
       create() {
         this.score = 0;
         this.lives = 3;
@@ -29,17 +37,43 @@ export default function GamePage() {
         this.timer = 5;
 
         // ------------------ Layout ------------------
-        this.paddingBottom = 150; // bottom padding
-        this.playerWidth = 70; // bigger player
+        this.paddingBottom = 150;
+        this.playerWidth = 70;
         this.playerHeight = 70;
-        this.laneGap = 120; // bigger spacing between blocks
+        this.laneGap = 120;
         this.blockWidth = 250;
         this.blockHeight = 70;
+
+        // Add bridge background at the bottom
+        const bridgeHeight = 325; // Increased height of bridge
+        this.bridge = this.add.image(this.scale.width / 2, this.scale.height - bridgeHeight / 2, 'bridge');
+        this.bridge.setDisplaySize(this.scale.width, bridgeHeight);
 
         this.playerX = 150;
         this.playerY = this.scale.height - this.paddingBottom - this.playerHeight / 2;
         this.currentLane = 1;
-        this.player = this.add.rectangle(this.playerX, this.playerY, this.playerWidth, this.playerHeight, 0x00ff00);
+        
+         // Add background at the very back, covering entire screen
+         const background = this.add.image(this.scale.width / 2, this.scale.height / 2, 'background');
+         background.setDisplaySize(this.scale.width, this.scale.height);
+         background.setDepth(-10); // Lowest depth to ensure it's behind everything
+
+        // Create player sprite
+        this.player = this.add.sprite(this.playerX, this.playerY, 'kitty1');
+        this.player.setScale(4);
+        
+        // Create animation
+        this.anims.create({
+          key: 'run',
+          frames: [
+            { key: 'kitty1' },
+            { key: 'kitty2' }
+          ],
+          frameRate: 4,
+          repeat: -1
+        });
+        
+        this.player.play('run');
 
         // Input
         this.cursors = this.input.keyboard.createCursorKeys();
@@ -48,16 +82,22 @@ export default function GamePage() {
         this.timerText = this.add.text(20, 20, `Time: ${Math.ceil(this.timer)}`, {
           fontSize: '28px', fill: '#000', stroke: '#fff', strokeThickness: 2
         });
+        this.timerText.setDepth(100); // Always on top
+        
         this.scoreText = this.add.text(this.scale.width - 20, 20, `Score: ${this.score}`, {
           fontSize: '28px', fill: '#00aa00'
         }).setOrigin(1, 0);
+        this.scoreText.setDepth(100); // Always on top
+        
         this.livesText = this.add.text(this.scale.width - 20, 60, `Lives: ${this.lives}`, {
           fontSize: '28px', fill: '#aa0000'
         }).setOrigin(1, 0);
+        this.livesText.setDepth(100); // Always on top
 
         this.questionText = this.add.text(this.scale.width / 2, 100, '', {
           fontSize: '32px', fill: '#000', align: 'center', wordWrap: { width: this.scale.width - 100 }
         }).setOrigin(0.5);
+        this.questionText.setDepth(100); // Always on top
 
         this.showQuestion();
       }
@@ -80,10 +120,10 @@ export default function GamePage() {
         if (this.blocks) this.blocks.forEach(b => b.destroy());
         this.blocks = [];
 
-        const startX = this.scale.width + 200; // offscreen right
+        const startX = this.scale.width + 200;
         const endX = this.playerX;
-        const laneStartY = this.playerY - (this.laneGap * 1); // vertical positions for lanes
-        const duration = this.timer * 1000; // time to reach player
+        const laneStartY = this.playerY - this.laneGap;
+        const duration = this.timer * 1000;
 
         this.answers.forEach((ans, i) => {
           const block = this.add.text(startX, laneStartY + i * this.laneGap, ans, {
@@ -92,10 +132,11 @@ export default function GamePage() {
             padding: { x: 20, y: 20 },
             color: '#000'
           }).setOrigin(0.5);
+          
+          block.setDepth(5); // Above bridge and background, but below HUD
 
           this.blocks.push(block);
 
-          // Animate block moving to player
           this.tweens.add({
             targets: block,
             x: endX,
@@ -116,7 +157,6 @@ export default function GamePage() {
           this.player.y = this.playerY - (this.laneGap * (1 - this.currentLane));
         }
 
-        // HUD update
         this.timerText.setText(`Time: ${Math.ceil(this.timer)}`);
         this.scoreText.setText(`Score: ${this.score}`);
         this.livesText.setText(`Lives: ${this.lives}`);
@@ -160,11 +200,10 @@ export default function GamePage() {
 
   }, [stage]);
 
-  // ---------------- HOME ----------------
   if (stage === "home") {
     return (
       <div className="flex flex-col justify-center items-center w-screen h-screen bg-white pt-20">
-        <h1 className="text-5xl font-bold mb-10 text-black">Language Game</h1>
+        <h1 className="text-5xl font-bold mb-10 text-black">Kitty Quiz Runner</h1>
         <button
           className="w-48 py-3 mb-4 bg-red-500 hover:bg-red-600 text-white font-semibold rounded-lg transition-colors"
           onClick={() => setStage("playing")}
@@ -181,10 +220,8 @@ export default function GamePage() {
     );
   }
 
-  // ---------------- GAME ----------------
   if (stage === "playing") return <div id="game-container" className="w-screen h-screen"></div>;
 
-  // ---------------- RESULT ----------------
   if (stage === "result") {
     return (
       <div className="flex flex-col justify-center items-center w-screen h-screen bg-white pt-20">
