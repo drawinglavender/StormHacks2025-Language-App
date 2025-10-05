@@ -79,24 +79,27 @@ export default function GamePage() {
         this.cursors = this.input.keyboard.createCursorKeys();
 
         // ------------------ HUD ------------------
-        this.timerText = this.add.text(20, 20, `Time: ${Math.ceil(this.timer)}`, {
-          fontSize: '28px', fill: '#000', stroke: '#fff', strokeThickness: 2
-        });
-        this.timerText.setDepth(100); // Always on top
-        
-        this.scoreText = this.add.text(this.scale.width - 20, 20, `Score: ${this.score}`, {
-          fontSize: '28px', fill: '#00aa00'
-        }).setOrigin(1, 0);
-        this.scoreText.setDepth(100); // Always on top
-        
-        this.livesText = this.add.text(this.scale.width - 20, 60, `Lives: ${this.lives}`, {
-          fontSize: '28px', fill: '#aa0000'
-        }).setOrigin(1, 0);
-        this.livesText.setDepth(100); // Always on top
+       // ------------------ HUD ------------------
+       this.timerText = this.add.text(20, 20, `Time: ${Math.ceil(this.timer)}`, {
+        fontSize: '28px', fill: '#fff', stroke: '#000', strokeThickness: 2
+      });
+      this.timerText.setDepth(100); // Always on top
+      
+      this.scoreText = this.add.text(this.scale.width - 20, 20, `Score: ${this.score}`, {
+        fontSize: '28px', fill: '#fff'
+      }).setOrigin(1, 0);
+      this.scoreText.setDepth(100); // Always on top
+      
+      this.livesText = this.add.text(this.scale.width - 20, 60, `Lives: ${this.lives}`, {
+        fontSize: '28px', fill: '#fff'
+      }).setOrigin(1, 0);
+      this.livesText.setDepth(100); // Always on top
 
-        this.questionText = this.add.text(this.scale.width / 2, 100, '', {
-          fontSize: '32px', fill: '#000', align: 'center', wordWrap: { width: this.scale.width - 100 }
-        }).setOrigin(0.5);
+      this.questionText = this.add.text(this.scale.width / 2, 100, '', {
+        fontSize: '48px', fill: '#fff', align: 'center', wordWrap: { width: this.scale.width - 200 },
+        backgroundColor: '#326BD0', padding: { x: 40, y: 30 }
+      }).setOrigin(0.5);
+      this.questionText.setDepth(100); // Always on top
         this.questionText.setDepth(100); // Always on top
 
         this.showQuestion();
@@ -128,9 +131,9 @@ export default function GamePage() {
         this.answers.forEach((ans, i) => {
           const block = this.add.text(startX, laneStartY + i * this.laneGap, ans, {
             fontSize: '28px',
-            backgroundColor: '#ffcccc',
+            backgroundColor: '#326BD0',
             padding: { x: 20, y: 20 },
-            color: '#000'
+            color: '#fff'
           }).setOrigin(0.5);
           
           block.setDepth(5); // Above bridge and background, but below HUD
