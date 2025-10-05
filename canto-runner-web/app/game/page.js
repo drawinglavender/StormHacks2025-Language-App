@@ -2,15 +2,14 @@
 
 import { useEffect, useState } from "react";
 import * as Phaser from "phaser";
-import "./game.css"; // optional CSS for extra styling
+import "./game.css";
 
 export default function GamePage() {
-  const [stage, setStage] = useState("home"); // home, playing, result
+  const [stage, setStage] = useState("home");
   const [score, setScore] = useState(0);
   const [lives, setLives] = useState(3);
-  const [resultType, setResultType] = useState(""); // "win" or "lose"
+  const [resultType, setResultType] = useState("");
 
-  // Sample questions
   const questions = [
     { question: "Capital of France?", correct: "Paris", wrong: ["London", "Berlin", "Rome"] },
     { question: "2 + 2 = ?", correct: "4", wrong: ["3", "5", "22"] },
@@ -29,28 +28,37 @@ export default function GamePage() {
         this.questionIndex = 0;
         this.timer = 5;
 
-        this.lanesY = [200, 300, 400];
-        this.currentLane = 1;
+        // ------------------ Layout ------------------
+        this.paddingBottom = 150; // bottom padding
+        this.playerWidth = 70; // bigger player
+        this.playerHeight = 70;
+        this.laneGap = 120; // bigger spacing between blocks
+        this.blockWidth = 250;
+        this.blockHeight = 70;
 
-        this.player = this.add.rectangle(400, this.lanesY[this.currentLane], 50, 50, 0x00ff00);
+        this.playerX = 150;
+        this.playerY = this.scale.height - this.paddingBottom - this.playerHeight / 2;
+        this.currentLane = 1;
+        this.player = this.add.rectangle(this.playerX, this.playerY, this.playerWidth, this.playerHeight, 0x00ff00);
+
+        // Input
         this.cursors = this.input.keyboard.createCursorKeys();
 
-        // Top-right Score and Lives
-        this.scoreText = this.add.text(window.innerWidth - 20, 20, `Score: ${this.score}`, {
-          fontSize: '24px',
-          fill: '#000000'
+        // ------------------ HUD ------------------
+        this.timerText = this.add.text(20, 20, `Time: ${Math.ceil(this.timer)}`, {
+          fontSize: '28px', fill: '#000', stroke: '#fff', strokeThickness: 2
+        });
+        this.scoreText = this.add.text(this.scale.width - 20, 20, `Score: ${this.score}`, {
+          fontSize: '28px', fill: '#00aa00'
+        }).setOrigin(1, 0);
+        this.livesText = this.add.text(this.scale.width - 20, 60, `Lives: ${this.lives}`, {
+          fontSize: '28px', fill: '#aa0000'
         }).setOrigin(1, 0);
 
-        this.livesText = this.add.text(window.innerWidth - 20, 50, `Lives: ${this.lives}`, {
-          fontSize: '24px',
-          fill: '#000000'
-        }).setOrigin(1, 0);
+        this.questionText = this.add.text(this.scale.width / 2, 100, '', {
+          fontSize: '32px', fill: '#000', align: 'center', wordWrap: { width: this.scale.width - 100 }
+        }).setOrigin(0.5);
 
-        // Question and Timer
-        this.questionText = this.add.text(400, 100, '', { fontSize: '28px', fill: '#000000' }).setOrigin(0.5);
-        this.timerText = this.add.text(400, 150, `Time: ${Math.ceil(this.timer)}`, { fontSize: '24px', fill: '#000000' }).setOrigin(0.5);
-
-        this.answerTexts = [];
         this.showQuestion();
       }
 
@@ -69,37 +77,69 @@ export default function GamePage() {
         const wrongAnswers = Phaser.Utils.Array.Shuffle(this.currentQuestion.wrong).slice(0, 2);
         this.answers = Phaser.Utils.Array.Shuffle([this.currentQuestion.correct, ...wrongAnswers]);
 
-        this.answerTexts.forEach(t => t.destroy());
-        this.answerTexts = this.answers.map((ans, i) =>
-          this.add.text(400, this.lanesY[i], ans, { fontSize: '24px', fill: '#000000' }).setOrigin(0.5)
-        );
+        if (this.blocks) this.blocks.forEach(b => b.destroy());
+        this.blocks = [];
 
-        this.timer = 5;
+        const startX = this.scale.width + 200; // offscreen right
+        const endX = this.playerX;
+        const laneStartY = this.playerY - (this.laneGap * 1); // vertical positions for lanes
+        const duration = this.timer * 1000; // time to reach player
+
+        this.answers.forEach((ans, i) => {
+          const block = this.add.text(startX, laneStartY + i * this.laneGap, ans, {
+            fontSize: '28px',
+            backgroundColor: '#ffcccc',
+            padding: { x: 20, y: 20 },
+            color: '#000'
+          }).setOrigin(0.5);
+
+          this.blocks.push(block);
+
+          // Animate block moving to player
+          this.tweens.add({
+            targets: block,
+            x: endX,
+            duration: duration,
+            ease: 'Linear'
+          });
+        });
       }
 
       update(time, delta) {
+        // Move player up/down between lanes
         if (Phaser.Input.Keyboard.JustDown(this.cursors.up)) {
           this.currentLane = Math.max(0, this.currentLane - 1);
-          this.player.y = this.lanesY[this.currentLane];
+          this.player.y = this.playerY - (this.laneGap * (1 - this.currentLane));
         }
         if (Phaser.Input.Keyboard.JustDown(this.cursors.down)) {
           this.currentLane = Math.min(2, this.currentLane + 1);
-          this.player.y = this.lanesY[this.currentLane];
+          this.player.y = this.playerY - (this.laneGap * (1 - this.currentLane));
         }
 
-        this.timer -= delta / 1000;
-
-        // Update HUD
+        // HUD update
         this.timerText.setText(`Time: ${Math.ceil(this.timer)}`);
         this.scoreText.setText(`Score: ${this.score}`);
         this.livesText.setText(`Lives: ${this.lives}`);
 
-        if (this.timer <= 0 || Phaser.Input.Keyboard.JustDown(this.cursors.right)) {
+        // Right arrow to select
+        if (Phaser.Input.Keyboard.JustDown(this.cursors.right)) {
           const chosen = this.answers[this.currentLane];
           if (chosen === this.currentQuestion.correct) this.score++;
           else this.lives--;
 
           this.questionIndex++;
+          this.timer = 5;
+          this.blocks.forEach(b => b.destroy());
+          this.showQuestion();
+        }
+
+        // Timer runs out
+        this.timer -= delta / 1000;
+        if (this.timer <= 0) {
+          this.lives--;
+          this.questionIndex++;
+          this.timer = 5;
+          this.blocks.forEach(b => b.destroy());
           this.showQuestion();
         }
       }
@@ -112,31 +152,27 @@ export default function GamePage() {
       parent: "game-container",
       backgroundColor: 0xffffff,
       scene: [GameScene],
-      scale: {
-        mode: Phaser.Scale.FIT,
-        autoCenter: Phaser.Scale.CENTER_BOTH,
-      },
+      scale: { mode: Phaser.Scale.FIT, autoCenter: Phaser.Scale.CENTER_BOTH }
     };
 
     const game = new Phaser.Game(config);
     return () => game.destroy(true);
+
   }, [stage]);
 
-  // ---------------- HOME SCREEN ----------------
+  // ---------------- HOME ----------------
   if (stage === "home") {
     return (
       <div className="flex flex-col justify-center items-center w-screen h-screen bg-white pt-20">
         <h1 className="text-5xl font-bold mb-10 text-black">Language Game</h1>
-
         <button
           className="w-48 py-3 mb-4 bg-red-500 hover:bg-red-600 text-white font-semibold rounded-lg transition-colors"
           onClick={() => setStage("playing")}
         >
           Start
         </button>
-
         <button
-          className="w-48 py-3 bg-red-500 hover:bg-red-600 text-white font-semibold rounded-lg transition-colors"
+          className="w-48 py-3 mb-4 bg-red-500 hover:bg-red-600 text-white font-semibold rounded-lg transition-colors"
           onClick={() => alert("Use ↑↓ to move and → to select the answer")}
         >
           How to Play
@@ -145,12 +181,10 @@ export default function GamePage() {
     );
   }
 
-  // ---------------- GAME SCREEN ----------------
-  if (stage === "playing") {
-    return <div id="game-container" className="w-screen h-screen"></div>;
-  }
+  // ---------------- GAME ----------------
+  if (stage === "playing") return <div id="game-container" className="w-screen h-screen"></div>;
 
-  // ---------------- RESULT SCREEN ----------------
+  // ---------------- RESULT ----------------
   if (stage === "result") {
     return (
       <div className="flex flex-col justify-center items-center w-screen h-screen bg-white pt-20">
@@ -158,7 +192,6 @@ export default function GamePage() {
           {resultType === "win" ? "Congratulations! You won!" : "You ran out of HP!"}
         </h1>
         <p className="text-xl text-black mb-6">Score: {score}</p>
-
         <button
           className="w-48 py-3 mb-4 bg-red-500 hover:bg-red-600 text-white font-semibold rounded-lg transition-colors"
           onClick={() => {
@@ -169,7 +202,6 @@ export default function GamePage() {
         >
           Play Again
         </button>
-
         <button
           className="w-48 py-3 bg-red-500 hover:bg-red-600 text-white font-semibold rounded-lg transition-colors"
           onClick={() => setStage("home")}
