@@ -10,6 +10,13 @@ import HistoryTab from "../../components/translator/HistoryTab";
 import FlashcardsTab from "../../components/translator/FlashcardsTab";
 import SettingsTab from "../../components/translator/SettingsTab";
 
+const brand = {
+    lightBlue: '#639BFF',
+    midBlue: '#326BD0',
+    deepBlue: '#12387D',
+    white: '#FFFFFF',
+  };
+  
 export default function TranslatePage() {
   // Core state - KEEP THESE
   const [transcribedText, setTranscribedText] = useState("");
@@ -143,11 +150,9 @@ export default function TranslatePage() {
   };
 
   // Theme classes
-  const bgColor = darkMode ? 'bg-gray-900' : 'bg-gray-50';
-  const cardBg = darkMode ? 'bg-gray-800' : 'bg-white';
-  const textColor = darkMode ? 'text-gray-100' : 'text-gray-900';
-  const mutedColor = darkMode ? 'text-gray-400' : 'text-gray-600';
-  const borderColor = darkMode ? 'border-gray-700' : 'border-gray-200';
+// Theme classes 
+const bgColor = darkMode ? 'bg-gray-900' : 'bg-gray-50'; const cardBg = darkMode ? 'bg-gray-800' : 'bg-white'; const textColor = darkMode ? 'text-gray-100' : 'text-gray-900'; const mutedColor = darkMode ? 'text-gray-400' : 'text-gray-600'; const borderColor = darkMode ? 'border-gray-700' : 'border-gray-200';
+  
 
   return (
     <div className={`min-h-screen ${bgColor} ${textColor} transition-colors duration-300`}>
@@ -155,11 +160,12 @@ export default function TranslatePage() {
       <header className={`${cardBg} border-b ${borderColor} sticky top-0 z-50 backdrop-blur-lg bg-opacity-90`}>
         <div className="max-w-7xl mx-auto px-4 py-4 flex items-center justify-between">
           <div className="flex items-center space-x-3">
-            <div className="w-10 h-10 bg-gradient-to-br from-blue-500 to-purple-600 rounded-lg flex items-center justify-center">
-              <span className="text-white font-bold text-xl">粵</span>
+          <div className="w-10 h-10 bg-gradient-to-br from-[#639BFF] to-[#326BD0] rounded-lg flex items-center justify-center">
+            <span className="text-white font-bold text-xl">NL</span>
             </div>
-            <h1 className="text-2xl font-bold bg-gradient-to-r from-blue-500 to-purple-600 bg-clip-text text-transparent">
-              Cantonese Translator
+
+            <h1 className="text-2xl font-bold bg-gradient-to-r from-[#639BFF] to-[#326BD0] bg-clip-text text-transparent">
+            NativeLeap
             </h1>
           </div>
           
@@ -179,17 +185,20 @@ export default function TranslatePage() {
                 key={tab}
                 onClick={() => setActiveTab(tab)}
                 className={`px-6 py-3 font-medium capitalize transition-all ${
-                  activeTab === tab
-                    ? darkMode 
-                      ? 'border-b-2 border-blue-500 text-blue-400' 
-                      : 'border-b-2 border-blue-600 text-blue-600'
+                activeTab === tab
+                    ? `border-b-2 ${
+                        darkMode
+                            ? 'border-[#639BFF] text-[#639BFF]'
+                            : 'border-[#326BD0] text-[#326BD0]'
+                        }`
                     : mutedColor
+                      
                 }`}
               >
-                {tab === 'translate' && '✨ Translate'}
-                {tab === 'saved' && '🕒 History'}
-                {tab === 'flashcards' && '📚 Flashcards'}
-                {tab === 'settings' && '⚙️ Settings'}
+                {tab === 'translate' && 'Translate'}
+                {tab === 'saved' && 'History'}
+                {tab === 'flashcards' && 'Flashcards'}
+                {tab === 'settings' && 'Settings'}
               </button>
             ))}
           </div>
