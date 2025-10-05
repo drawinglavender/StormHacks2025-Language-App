@@ -1,0 +1,78 @@
+/* Full viewport for the game container */
+#game-container {
+  width: 100vw;
+  height: 100vh;
+  position: relative;
+  overflow: hidden;
+  background-color: #ffffff; /* White background */
+}
+
+/* Phaser canvas should fill container */
+#game-container canvas {
+  display: block;
+  width: 100%;
+  height: 100%;
+}
+
+/* HUD: Score, Lives, Timer */
+.game-hud {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  padding: 1rem;
+  display: flex;
+  justify-content: space-between;
+  font-weight: bold;
+  color: black; /* Dark text for white background */
+  z-index: 10;
+}
+
+/* Footer instructions */
+.game-footer {
+  position: absolute;
+  bottom: 0;
+  width: 100%;
+  text-align: center;
+  padding: 0.5rem;
+  font-size: 0.875rem;
+  color: #333;
+  z-index: 10;
+}
+
+/* Result screen styling */
+.game-result {
+  width: 100vw;
+  height: 100vh;
+  background-color: #ffffff; /* White background */
+  color: black; /* Dark text */
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  align-items: center;
+}
+
+.game-result h1 {
+  font-size: 2rem;
+  margin-bottom: 1rem;
+}
+
+.game-result p {
+  font-size: 1.25rem;
+  margin-bottom: 1.5rem;
+}
+
+.game-result button {
+  padding: 0.5rem 1rem;
+  background-color: black; /* dark button for contrast */
+  color: white;
+  border-radius: 0.25rem;
+  font-weight: bold;
+  cursor: pointer;
+  border: none;
+  transition: background-color 0.2s;
+}
+
+.game-result button:hover {
+  background-color: #333;
+}

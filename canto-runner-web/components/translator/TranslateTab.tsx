@@ -1,6 +1,77 @@
 import React from 'react';
 import { Mic, Copy, Star, Download, Check, Play } from 'lucide-react';
 
+function parseTranslationOutput(text: string) {
+  const sections = {
+    translation: { chinese: '', jyutping: '' },
+    keyWords: [] as Array<{ word: string; pronunciation: string; meaning: string }>,
+    alternatives: [] as Array<{ type: string; chinese: string; jyutping: string }>
+  };
+
+  const lines = text.split('\n').map(line => line.trim()).filter(line => line);
+  let currentSection = '';
+  
+  for (let i = 0; i < lines.length; i++) {
+    const line = lines[i];
+    
+    // Check for section headers
+    if (line === 'Translation' || line.startsWith('## Translation')) {
+      currentSection = 'translation';
+      continue;
+    }
+    if (line === 'Key Cantonese Words' || line.startsWith('## Key Cantonese Words')) {
+      currentSection = 'keyWords';
+      continue;
+    }
+    if (line === 'Alternative Expressions' || line.startsWith('## Alternative Expressions')) {
+      currentSection = 'alternatives';
+      continue;
+    }
+
+    // Parse translation section
+    if (currentSection === 'translation') {
+      if (line.startsWith('**Chinese:**')) {
+        sections.translation.chinese = line.replace('**Chinese:**', '').trim();
+      } else if (line.startsWith('**Jyutping:**')) {
+        sections.translation.jyutping = line.replace('**Jyutping:**', '').trim();
+      }
+    }
+    
+    // Parse key words
+    else if (currentSection === 'keyWords' && line.startsWith('•')) {
+      const match = line.match(/• \*\*(.+?) \((.+?)\)\*\* - (.+)/);
+      if (match) {
+        sections.keyWords.push({
+          word: match[1].trim(),
+          pronunciation: match[2].trim(),
+          meaning: match[3].trim()
+        });
+      }
+    }
+    
+    // Parse alternatives
+    else if (currentSection === 'alternatives') {
+      if (line.match(/^\d+\.|###\s+\d+\./)) {
+        const typeMatch = line.match(/(?:\d+\.\s+|###\s+\d+\.\s+)(.+)/);
+        if (typeMatch && i + 2 < lines.length) {
+          const chineseLine = lines[i + 1];
+          const jyutpingLine = lines[i + 2];
+          
+          if (chineseLine.startsWith('**Chinese:**') && jyutpingLine.startsWith('**Jyutping:**')) {
+            sections.alternatives.push({
+              type: typeMatch[1].trim(),
+              chinese: chineseLine.replace('**Chinese:**', '').trim(),
+              jyutping: jyutpingLine.replace('**Jyutping:**', '').trim()
+            });
+          }
+        }
+      }
+    }
+  }
+
+  return sections;
+}
+
 interface TranslateTabProps {
   transcribedText: string;
   setTranscribedText: (text: string) => void;
@@ -109,53 +180,109 @@ export default function TranslateTab({
       </div>
 
       {/* Output Section */}
-      <div className={`${cardBg} rounded-2xl shadow-lg p-6 border ${borderColor}`}>
+      <div className={`${cardBg} rounded-2xl shadow-lg p-6 border ${borderColor} overflow-y-auto max-h-[600px]`}>
         {translation ? (
-          <div className="space-y-6">
-            <div>
-              <div className="flex items-center justify-between mb-3">
-                <h2 className="text-lg font-semibold">Translation</h2>
-                <div className="flex space-x-2">
-                  <button
-                    onClick={() => toggleFavorite(translation.id)}
-                    className={`p-2 rounded-lg transition-colors ${
-                      translation.favorite 
-                        ? 'text-yellow-500' 
-                        : mutedColor
-                    } ${darkMode ? 'hover:bg-gray-700' : 'hover:bg-gray-200'}`}
-                  >
-                    <Star className="w-5 h-5" fill={translation.favorite ? 'currentColor' : 'none'} />
-                  </button>
-                  <button
-                    onClick={() => copyToClipboard(translation.translated)}
-                    className={`p-2 rounded-lg ${darkMode ? 'hover:bg-gray-700' : 'hover:bg-gray-200'} transition-colors`}
-                  >
-                    {copied ? <Check className="w-5 h-5 text-green-500" /> : <Copy className="w-5 h-5" />}
-                  </button>
-                  <button
-                    onClick={exportTranslation}
-                    className={`p-2 rounded-lg ${darkMode ? 'hover:bg-gray-700' : 'hover:bg-gray-200'} transition-colors`}
-                  >
-                    <Download className="w-5 h-5" />
-                  </button>
-                </div>
+          <div>
+            <div className="flex items-center justify-between mb-6">
+              <h2 className="text-lg font-semibold">Analysis</h2>
+              <div className="flex space-x-2">
+                <button
+                  onClick={() => toggleFavorite(translation.id)}
+                  className={`p-2 rounded-lg transition-colors ${
+                    translation.favorite 
+                      ? 'text-yellow-500' 
+                      : mutedColor
+                  } ${darkMode ? 'hover:bg-gray-700' : 'hover:bg-gray-200'}`}
+                  title="Add to favorites"
+                >
+                  <Star className="w-5 h-5" fill={translation.favorite ? 'currentColor' : 'none'} />
+                </button>
+                <button
+                  onClick={() => copyToClipboard(translation.translated)}
+                  className={`p-2 rounded-lg ${darkMode ? 'hover:bg-gray-700' : 'hover:bg-gray-200'} transition-colors`}
+                  title="Copy full analysis"
+                >
+                  {copied ? <Check className="w-5 h-5 text-green-500" /> : <Copy className="w-5 h-5" />}
+                </button>
+                <button
+                  onClick={exportTranslation}
+                  className={`p-2 rounded-lg ${darkMode ? 'hover:bg-gray-700' : 'hover:bg-gray-200'} transition-colors`}
+                  title="Export as Markdown"
+                >
+                  <Download className="w-5 h-5" />
+                </button>
               </div>
-              <p className={`p-4 ${darkMode ? 'bg-gray-700' : 'bg-gray-50'} rounded-lg text-lg`}>
-                {translation.translated}
-              </p>
             </div>
+            
+            {(() => {
+              const parsed = parseTranslationOutput(translation.translated);
+              return (
+                <div className="space-y-6">
+                  
+                  {/* Translation Card */}
+                  {parsed.translation.chinese && (
+                    <div className={`${cardBg} rounded-lg p-4 border ${borderColor}`}>
+                      <h3 className="font-medium text-sm mb-3">Translation</h3>
+                      <div className="space-y-2">
+                        <p className="text-lg font-medium">{parsed.translation.chinese}</p>
+                        {parsed.translation.jyutping && (
+                          <p className={`${mutedColor} text-base`}>{parsed.translation.jyutping}</p>
+                        )}
+                      </div>
+                    </div>
+                  )}
+
+                  {/* Key Words Card */}
+                  {parsed.keyWords.length > 0 && (
+                    <div className={`${cardBg} rounded-lg p-4 border ${borderColor}`}>
+                      <h3 className="font-medium text-sm mb-3">Key Words</h3>
+                      <div className="space-y-3">
+                        {parsed.keyWords.map((word, index) => (
+                          <div key={index} className="pb-3 border-b border-gray-200 dark:border-gray-700 last:border-b-0 last:pb-0">
+                            <div className="flex items-baseline gap-2 mb-1">
+                              <span className="font-medium text-base">{word.word}</span>
+                              <span className={`${mutedColor} text-sm`}>({word.pronunciation})</span>
+                            </div>
+                            <p className={`text-sm ${mutedColor}`}>{word.meaning}</p>
+                          </div>
+                        ))}
+                      </div>
+                    </div>
+                  )}
+
+                  {/* Alternative Expressions Card */}
+                  {parsed.alternatives.length > 0 && (
+                    <div className={`${cardBg} rounded-lg p-4 border ${borderColor}`}>
+                      <h3 className="font-medium text-sm mb-3">Alternatives</h3>
+                      <div className="space-y-4">
+                        {parsed.alternatives.map((alt, index) => (
+                          <div key={index} className="pb-3 border-b border-gray-200 dark:border-gray-700 last:border-b-0 last:pb-0">
+                            <h4 className="font-medium text-sm mb-2">{alt.type}</h4>
+                            <p className="text-base font-medium mb-1">{alt.chinese}</p>
+                            <p className={`${mutedColor} text-sm`}>{alt.jyutping}</p>
+                          </div>
+                        ))}
+                      </div>
+                    </div>
+                  )}
+
+                </div>
+              );
+            })()}
           </div>
         ) : (
-          <div className="h-full flex items-center justify-center">
+          <div className="h-full flex items-center justify-center min-h-[400px]">
             <div className="text-center">
+
             <button
               onClick={isRecording ? stopRecording : startRecording}
               className="w-20 h-20 mx-auto mb-4 bg-gradient-to-br from-[#639BFF] to-[#326BD0] rounded-full flex items-center justify-center shadow-md hover:shadow-xl transition-all"
             >
               <Mic className="w-8 h-8 text-white" />
             </button>
+
               <p className={mutedColor}>
-                {isTranslating ? 'Translating...' : 'Record or type, then click translate'}
+                {isTranslating ? 'Translating...' : 'Enter text to translate'}
               </p>
             </div>
           </div>
