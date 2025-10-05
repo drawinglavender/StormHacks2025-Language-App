@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useRef } from "react";
+import { useState, useRef, useEffect, useCallback } from "react";
 import { Mic, Copy, Star, Download, History, BookOpen, Sun, Moon, Check } from 'lucide-react';
 import { speechToText } from "../../utils/elevenlabs";
 import { translateToCantonese } from "../../utils/translator";
@@ -23,6 +23,7 @@ export default function TranslatePage() {
   const [isRecording, setIsRecording] = useState(false);
   const [isProcessing, setIsProcessing] = useState(false);
   const [isTranslating, setIsTranslating] = useState(false); // NEW: separate state for translation
+  const [isPlayingAudio, setIsPlayingAudio] = useState(false);
   const mediaRecorderRef = useRef<MediaRecorder | null>(null);
   const chunksRef = useRef<Blob[]>([]);
 
@@ -35,14 +36,21 @@ export default function TranslatePage() {
   const [settings, setSettings] = useState({
     showJyutping: true,
     alternativeCount: 3,
-    speechLanguage: 'cantonese'
+    speechLanguage: 'cantonese',
+    audioQuality: 'standard'
   });
   const [copied, setCopied] = useState(false);
 
   // Recording functions - KEEP THESE
   const startRecording = async () => {
     try {
-      const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
+      const stream = await navigator.mediaDevices.getUserMedia({ 
+        audio: {
+          sampleRate: settings.audioQuality === 'high' ? 48000 : 24000,
+          echoCancellation: true,
+          noiseSuppression: true
+        }
+      });
       const mediaRecorder = new MediaRecorder(stream);
       mediaRecorderRef.current = mediaRecorder;
       chunksRef.current = [];
@@ -133,6 +141,73 @@ export default function TranslatePage() {
     }
   };
 
+  // Audio playback function
+  const playAudio = async (text: string) => {
+    try {
+      setIsPlayingAudio(true);
+      
+      // Filter to only Chinese characters (removes jyutping, parentheses, etc.)
+      const chineseOnly = text.replace(/\([^)]*\)/g, '') // Remove anything in parentheses
+                            .replace(/[a-zA-Z0-9\s\-_]/g, '') // Remove Latin letters, numbers, spaces, dashes
+                            .trim();
+      
+      console.log('Original text:', text);
+      console.log('Playing Mandarin audio for Chinese only:', chineseOnly);
+      
+      if (!chineseOnly) {
+        console.log('No Chinese characters found to read');
+        setIsPlayingAudio(false);
+        return;
+      }
+      
+      // Use a Chinese-optimized voice ID
+      const response = await fetch('https://api.elevenlabs.io/v1/text-to-speech/onwK4e9ZLuTAKqWW03F9', {
+        method: 'POST',
+        headers: {
+          'Accept': 'audio/mpeg',
+          'Content-Type': 'application/json',
+          'xi-api-key': process.env.NEXT_PUBLIC_ELEVENLABS_API_KEY || '',
+        },
+        body: JSON.stringify({
+          text: chineseOnly, // Only send Chinese characters
+          model_id: 'eleven_turbo_v2_5',
+          voice_settings: {
+            stability: 0.6,
+            similarity_boost: 0.8,
+            style: 0.2,
+            use_speaker_boost: true
+          }
+        }),
+      });
+
+      if (!response.ok) {
+        const errorText = await response.text();
+        console.error('ElevenLabs API error:', errorText);
+        throw new Error('ElevenLabs TTS failed');
+      }
+
+      const audioBlob = await response.blob();
+      const audioUrl = URL.createObjectURL(audioBlob);
+      const audio = new Audio(audioUrl);
+      
+      await audio.play();
+      
+      audio.onended = () => {
+        URL.revokeObjectURL(audioUrl);
+        setIsPlayingAudio(false);
+      };
+      
+      audio.onerror = () => {
+        URL.revokeObjectURL(audioUrl);
+        setIsPlayingAudio(false);
+      };
+      
+    } catch (error) {
+      console.error('Audio playback failed:', error);
+      setIsPlayingAudio(false);
+    }
+  };
+
   // UI helper functions
   const copyToClipboard = (text: string) => {
     navigator.clipboard.writeText(text);
@@ -146,6 +221,73 @@ export default function TranslatePage() {
     ));
     if (translation?.id === id) {
       setTranslation((prev: any) => ({ ...prev, favorite: !prev.favorite }));
+    }
+  };
+
+  // Keyboard shortcuts handler
+  const handleKeyPress = useCallback((event: KeyboardEvent) => {
+    // Space bar for recording
+    if (event.code === 'Space' && event.target === document.body) {
+      event.preventDefault();
+      if (isRecording) {
+        stopRecording();
+      } else {
+        startRecording();
+      }
+    }
+    
+    // Ctrl + L to clear text
+    if (event.ctrlKey && event.key === 'l') {
+      event.preventDefault();
+      setTranscribedText('');
+    }
+    
+    // Ctrl + C to copy translation
+    if (event.ctrlKey && event.key === 'c' && translation) {
+      event.preventDefault();
+      copyToClipboard(translation.translated);
+    }
+  }, [isRecording, stopRecording, startRecording, translation, copyToClipboard]);
+
+  // Add useEffect for keyboard shortcuts
+  useEffect(() => {
+    document.addEventListener('keydown', handleKeyPress);
+    return () => {
+      document.removeEventListener('keydown', handleKeyPress);
+    };
+  }, [handleKeyPress]);
+
+  // Data management functions
+  const exportHistory = () => {
+    if (history.length === 0) {
+      alert('No history to export');
+      return;
+    }
+    
+    const historyData = {
+      exportDate: new Date().toISOString(),
+      translations: history.map(item => ({
+        original: item.original,
+        translated: item.translated,
+        timestamp: item.timestamp,
+        favorite: item.favorite
+      }))
+    };
+    
+    const blob = new Blob([JSON.stringify(historyData, null, 2)], { type: 'application/json' });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = `cantonese-history-${new Date().toISOString().split('T')[0]}.json`;
+    a.click();
+    URL.revokeObjectURL(url);
+  };
+
+  const clearHistory = () => {
+    if (confirm('Are you sure you want to clear all history? This cannot be undone.')) {
+      setHistory([]);
+      setTranslation(null);
+      alert('History cleared successfully');
     }
   };
 
@@ -225,6 +367,8 @@ const bgColor = darkMode ? 'bg-gray-900' : 'bg-gray-50'; const cardBg = darkMode
             translateText={translateText}
             copyToClipboard={copyToClipboard}
             toggleFavorite={toggleFavorite}
+            playAudio={playAudio} // ADD THIS
+            isPlayingAudio={isPlayingAudio} // ADD THIS
           />
         )}
 
@@ -261,6 +405,8 @@ const bgColor = darkMode ? 'bg-gray-900' : 'bg-gray-50'; const cardBg = darkMode
             textColor={textColor}
             mutedColor={mutedColor}
             borderColor={borderColor}
+            exportHistory={exportHistory}
+            clearHistory={clearHistory}
           />
         )}
       </main>
