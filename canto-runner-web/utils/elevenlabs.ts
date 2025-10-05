@@ -19,8 +19,14 @@ export async function speechToText(audioBlob: Blob): Promise<string> {
       }
     );
 
-    // Return the text from response
-    return response.data.text || 'No transcription received';
+    // Clean the text by removing content in both parentheses and brackets
+    const rawText = response.data.text || 'No transcription received';
+    const cleanedText = rawText
+      .replace(/\([^)]*\)/g, '')  // Remove (content)
+      .replace(/\[[^\]]*\]/g, '') // Remove [content]
+      .trim();
+    
+    return cleanedText;
     
   } catch (error) {
     console.error('Speech-to-Text Error:', error);
