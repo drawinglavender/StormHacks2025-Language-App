@@ -60,6 +60,13 @@ export default function Home() {
         </div>
       </main>
 
+            <Link href="/translate">
+        <button className="rounded-full bg-green-600 text-white hover:bg-green-700 font-medium text-sm sm:text-base h-10 sm:h-12 px-4 sm:px-5 w-full sm:w-auto md:w-[158px]">
+          Translate
+        </button>
+      </Link>
+
+
       <footer className="row-start-3 flex gap-[24px] flex-wrap items-center justify-center">
         <a
           className="flex items-center gap-2 hover:underline hover:underline-offset-4"
