@@ -1,5 +1,5 @@
 import React from 'react';
-import { Mic, Copy, Star, Download, Check } from 'lucide-react';
+import { Mic, Copy, Star, Download, Check, Volume2 } from 'lucide-react';
 
 function parseTranslationOutput(text: string) {
   const sections = {
@@ -77,7 +77,7 @@ interface TranslateTabProps {
   setTranscribedText: (text: string) => void;
   isRecording: boolean;
   isProcessing: boolean;
-  isTranslating: boolean; // NEW: Separate translation loading state
+  isTranslating: boolean;
   translation: any;
   copied: boolean;
   darkMode: boolean;
@@ -90,6 +90,8 @@ interface TranslateTabProps {
   translateText: () => void;
   copyToClipboard: (text: string) => void;
   toggleFavorite: (id: number) => void;
+  playAudio: (text: string) => Promise<void>;
+  isPlayingAudio: boolean;
 }
 
 export default function TranslateTab({
@@ -97,7 +99,7 @@ export default function TranslateTab({
   setTranscribedText,
   isRecording,
   isProcessing,
-  isTranslating, // NEW: Use this for translation button state
+  isTranslating,
   translation,
   copied,
   darkMode,
@@ -109,7 +111,9 @@ export default function TranslateTab({
   stopRecording,
   translateText,
   copyToClipboard,
-  toggleFavorite
+  toggleFavorite,
+  playAudio,
+  isPlayingAudio
 }: TranslateTabProps) {
   const exportTranslation = () => {
     if (!translation) return;
@@ -221,7 +225,21 @@ export default function TranslateTab({
                   {/* Translation Card */}
                   {parsed.translation.chinese && (
                     <div className={`${cardBg} rounded-lg p-4 border ${borderColor}`}>
-                      <h3 className="font-medium text-sm mb-3">Translation</h3>
+                      <div className="flex items-center justify-between mb-3">
+                        <h3 className="font-medium text-sm">Translation</h3>
+                        <button
+                          onClick={() => playAudio(parsed.translation.chinese)}
+                          disabled={isPlayingAudio}
+                          className={`p-2 rounded-lg transition-colors ${
+                            isPlayingAudio 
+                              ? 'text-blue-500 animate-pulse' 
+                              : mutedColor
+                          } ${darkMode ? 'hover:bg-gray-700' : 'hover:bg-gray-200'} disabled:cursor-not-allowed`}
+                          title="Play Mandarin pronunciation"
+                        >
+                          <Volume2 className="w-4 h-4" />
+                        </button>
+                      </div>
                       <div className="space-y-2">
                         <p className="text-lg font-medium">{parsed.translation.chinese}</p>
                         {parsed.translation.jyutping && (
@@ -238,9 +256,23 @@ export default function TranslateTab({
                       <div className="space-y-3">
                         {parsed.keyWords.map((word, index) => (
                           <div key={index} className="pb-3 border-b border-gray-200 dark:border-gray-700 last:border-b-0 last:pb-0">
-                            <div className="flex items-baseline gap-2 mb-1">
-                              <span className="font-medium text-base">{word.word}</span>
-                              <span className={`${mutedColor} text-sm`}>({word.pronunciation})</span>
+                            <div className="flex items-center justify-between mb-1">
+                              <div className="flex items-baseline gap-2">
+                                <span className="font-medium text-base">{word.word}</span>
+                                <span className={`${mutedColor} text-sm`}>({word.pronunciation})</span>
+                              </div>
+                              <button
+                                onClick={() => playAudio(word.word)}
+                                disabled={isPlayingAudio}
+                                className={`p-1 rounded transition-colors ${
+                                  isPlayingAudio 
+                                    ? 'text-blue-500 animate-pulse' 
+                                    : mutedColor
+                                } ${darkMode ? 'hover:bg-gray-700' : 'hover:bg-gray-200'} disabled:cursor-not-allowed`}
+                                title="Play Mandarin pronunciation"
+                              >
+                                <Volume2 className="w-3 h-3" />
+                              </button>
                             </div>
                             <p className={`text-sm ${mutedColor}`}>{word.meaning}</p>
                           </div>
@@ -257,7 +289,21 @@ export default function TranslateTab({
                         {parsed.alternatives.map((alt, index) => (
                           <div key={index} className="pb-3 border-b border-gray-200 dark:border-gray-700 last:border-b-0 last:pb-0">
                             <h4 className="font-medium text-sm mb-2">{alt.type}</h4>
-                            <p className="text-base font-medium mb-1">{alt.chinese}</p>
+                            <div className="flex items-center justify-between mb-1">
+                              <p className="text-base font-medium">{alt.chinese}</p>
+                              <button
+                                onClick={() => playAudio(alt.chinese)}
+                                disabled={isPlayingAudio}
+                                className={`p-1 rounded transition-colors ${
+                                  isPlayingAudio 
+                                    ? 'text-blue-500 animate-pulse' 
+                                    : mutedColor
+                                } ${darkMode ? 'hover:bg-gray-700' : 'hover:bg-gray-200'} disabled:cursor-not-allowed`}
+                                title="Play Mandarin pronunciation"
+                              >
+                                <Volume2 className="w-3 h-3" />
+                              </button>
+                            </div>
                             <p className={`${mutedColor} text-sm`}>{alt.jyutping}</p>
                           </div>
                         ))}

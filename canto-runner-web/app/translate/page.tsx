@@ -16,6 +16,7 @@ export default function TranslatePage() {
   const [isRecording, setIsRecording] = useState(false);
   const [isProcessing, setIsProcessing] = useState(false);
   const [isTranslating, setIsTranslating] = useState(false); // NEW: separate state for translation
+  const [isPlayingAudio, setIsPlayingAudio] = useState(false);
   const mediaRecorderRef = useRef<MediaRecorder | null>(null);
   const chunksRef = useRef<Blob[]>([]);
 
@@ -126,6 +127,73 @@ export default function TranslatePage() {
     }
   };
 
+  // Audio playback function
+  const playAudio = async (text: string) => {
+    try {
+      setIsPlayingAudio(true);
+      
+      // Filter to only Chinese characters (removes jyutping, parentheses, etc.)
+      const chineseOnly = text.replace(/\([^)]*\)/g, '') // Remove anything in parentheses
+                            .replace(/[a-zA-Z0-9\s\-_]/g, '') // Remove Latin letters, numbers, spaces, dashes
+                            .trim();
+      
+      console.log('Original text:', text);
+      console.log('Playing Mandarin audio for Chinese only:', chineseOnly);
+      
+      if (!chineseOnly) {
+        console.log('No Chinese characters found to read');
+        setIsPlayingAudio(false);
+        return;
+      }
+      
+      // Use a Chinese-optimized voice ID
+      const response = await fetch('https://api.elevenlabs.io/v1/text-to-speech/onwK4e9ZLuTAKqWW03F9', {
+        method: 'POST',
+        headers: {
+          'Accept': 'audio/mpeg',
+          'Content-Type': 'application/json',
+          'xi-api-key': process.env.NEXT_PUBLIC_ELEVENLABS_API_KEY || '',
+        },
+        body: JSON.stringify({
+          text: chineseOnly, // Only send Chinese characters
+          model_id: 'eleven_turbo_v2_5',
+          voice_settings: {
+            stability: 0.6,
+            similarity_boost: 0.8,
+            style: 0.2,
+            use_speaker_boost: true
+          }
+        }),
+      });
+
+      if (!response.ok) {
+        const errorText = await response.text();
+        console.error('ElevenLabs API error:', errorText);
+        throw new Error('ElevenLabs TTS failed');
+      }
+
+      const audioBlob = await response.blob();
+      const audioUrl = URL.createObjectURL(audioBlob);
+      const audio = new Audio(audioUrl);
+      
+      await audio.play();
+      
+      audio.onended = () => {
+        URL.revokeObjectURL(audioUrl);
+        setIsPlayingAudio(false);
+      };
+      
+      audio.onerror = () => {
+        URL.revokeObjectURL(audioUrl);
+        setIsPlayingAudio(false);
+      };
+      
+    } catch (error) {
+      console.error('Audio playback failed:', error);
+      setIsPlayingAudio(false);
+    }
+  };
+
   // UI helper functions
   const copyToClipboard = (text: string) => {
     navigator.clipboard.writeText(text);
@@ -216,6 +284,8 @@ export default function TranslatePage() {
             translateText={translateText}
             copyToClipboard={copyToClipboard}
             toggleFavorite={toggleFavorite}
+            playAudio={playAudio} // ADD THIS
+            isPlayingAudio={isPlayingAudio} // ADD THIS
           />
         )}
 
