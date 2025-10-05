@@ -17,9 +17,9 @@ export default function Home() {
 
   return (
     <div className={`min-h-screen ${bgColor} ${textColor} transition-colors duration-300`}>
-      {/* Header with NL logo and toggle */}
-      <header className={`${cardBg} border-b ${borderColor} p-4`}>
-        <div className="max-w-7xl mx-auto flex items-center justify-between">
+      {/* Header with NL logo and toggle - ALIGNED TO MATCH TRANSLATE PAGE */}
+      <header className={`${cardBg} border-b ${borderColor} sticky top-0 z-50 backdrop-blur-lg bg-opacity-90`}>
+        <div className="max-w-7xl mx-auto px-4 py-4 flex items-center justify-between">
           <div className="flex items-center space-x-3">
             <div className="w-10 h-10 bg-gradient-to-br from-[#639BFF] to-[#326BD0] rounded-lg flex items-center justify-center">
               <span className="text-white font-bold text-xl">NL</span>
@@ -81,7 +81,7 @@ export default function Home() {
               <p className={`text-sm ${mutedColor}`}>Learn vocabulary with spaced repetition</p>
             </div>
             <div className="p-4">
-              <h3 className={`font-semibent ${textColor} mb-2`}>Interactive Games</h3>
+              <h3 className={`font-semibold ${textColor} mb-2`}>Interactive Games</h3>
               <p className={`text-sm ${mutedColor}`}>Practice through fun mini-games</p>
             </div>
           </div>
