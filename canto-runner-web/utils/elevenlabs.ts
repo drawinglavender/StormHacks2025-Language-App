@@ -1,13 +1,13 @@
-import { Voice, VoiceSettings } from 'elevenlabs-node';
 import axios from 'axios';
 
-const ELEVEN_LABS_API_KEY = process.env.ELEVEN_LABS_API_KEY!;
+const ELEVEN_LABS_API_KEY = process.env.NEXT_PUBLIC_ELEVENLABS_API_KEY!;
 const ELEVEN_LABS_API_URL = 'https://api.elevenlabs.io/v1';
 
 export async function speechToText(audioBlob: Blob): Promise<string> {
   try {
     const formData = new FormData();
-    formData.append('audio', audioBlob);
+    formData.append('file', audioBlob, 'audio.wav');
+    formData.append('model_id', 'scribe_v1'); // This is required!
 
     const response = await axios.post(
       `${ELEVEN_LABS_API_URL}/speech-to-text`,
@@ -15,14 +15,15 @@ export async function speechToText(audioBlob: Blob): Promise<string> {
       {
         headers: {
           'xi-api-key': ELEVEN_LABS_API_KEY,
-          'Content-Type': 'multipart/form-data',
         },
       }
     );
 
-    return response.data.text;
+    // Return the text from response
+    return response.data.text || 'No transcription received';
+    
   } catch (error) {
-    console.error('ElevenLabs Speech-to-Text Error:', error);
+    console.error('Speech-to-Text Error:', error);
     throw error;
   }
 }
@@ -58,19 +59,3 @@ export async function startRecording(durationMs: number = 5000): Promise<Blob> {
   }
 }
 
-// Original text-to-speech function
-export async function generateSpeech(text: string, voiceId: string) {
-  try {
-    const voice = new Voice(
-      ELEVEN_LABS_API_KEY,
-      voiceId,
-      new VoiceSettings(0.5, 0.5, 0.5)
-    );
-
-    const audio = await voice.generateAudio(text);
-    return audio;
-  } catch (error) {
-    console.error('ElevenLabs API Error:', error);
-    throw error;
-  }
-}
