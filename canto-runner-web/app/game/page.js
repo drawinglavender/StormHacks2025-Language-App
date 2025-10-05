@@ -8,6 +8,8 @@ export default function GamePage() {
   const [score, setScore] = useState(0);
   const [lives, setLives] = useState(3);
   const [resultType, setResultType] = useState("");
+  const [isLoading, setIsLoading] = useState(false);
+  const [dots, setDots] = useState(".");
 
   const questions = [
     { question: "Capital of France?", correct: "Paris", wrong: ["London", "Berlin", "Rome"] },
@@ -17,8 +19,24 @@ export default function GamePage() {
     { question: "Favorite color?", correct: "Blue", wrong: ["Red", "Green", "Yellow"] }
   ];
 
+  // Animated dots effect for loading screen
+  useEffect(() => {
+    if (!isLoading) return;
+    
+    const interval = setInterval(() => {
+      setDots(prev => {
+        if (prev === "...") return ".";
+        return prev + ".";
+      });
+    }, 500);
+    
+    return () => clearInterval(interval);
+  }, [isLoading]);
+
   useEffect(() => {
     if (stage !== "playing") return;
+
+    setIsLoading(true);
 
     class GameScene extends Phaser.Scene {
 
@@ -28,6 +46,11 @@ export default function GamePage() {
         this.load.image('kitty1', '/kitty1.png');
         this.load.image('kitty2', '/kitty2.png');
         this.load.image('background', '/background.png');
+        
+        // Set loading flag to false when all assets are loaded
+        this.load.on('complete', () => {
+          setTimeout(() => setIsLoading(false), 100);
+        });
       }
 
       create() {
@@ -45,7 +68,7 @@ export default function GamePage() {
         this.blockHeight = 70;
 
         // Add bridge background at the bottom
-        const bridgeHeight = 325; // Increased height of bridge
+        const bridgeHeight = 325;
         this.bridge = this.add.image(this.scale.width / 2, this.scale.height - bridgeHeight / 2, 'bridge');
         this.bridge.setDisplaySize(this.scale.width, bridgeHeight);
 
@@ -56,7 +79,7 @@ export default function GamePage() {
          // Add background at the very back, covering entire screen
          const background = this.add.image(this.scale.width / 2, this.scale.height / 2, 'background');
          background.setDisplaySize(this.scale.width, this.scale.height);
-         background.setDepth(-10); // Lowest depth to ensure it's behind everything
+         background.setDepth(-10);
 
         // Create player sprite
         this.player = this.add.sprite(this.playerX, this.playerY, 'kitty1');
@@ -79,28 +102,26 @@ export default function GamePage() {
         this.cursors = this.input.keyboard.createCursorKeys();
 
         // ------------------ HUD ------------------
-       // ------------------ HUD ------------------
        this.timerText = this.add.text(20, 20, `Time: ${Math.ceil(this.timer)}`, {
         fontSize: '28px', fill: '#fff', stroke: '#000', strokeThickness: 2
       });
-      this.timerText.setDepth(100); // Always on top
+      this.timerText.setDepth(100);
       
       this.scoreText = this.add.text(this.scale.width - 20, 20, `Score: ${this.score}`, {
         fontSize: '28px', fill: '#fff'
       }).setOrigin(1, 0);
-      this.scoreText.setDepth(100); // Always on top
+      this.scoreText.setDepth(100);
       
       this.livesText = this.add.text(this.scale.width - 20, 60, `Lives: ${this.lives}`, {
         fontSize: '28px', fill: '#fff'
       }).setOrigin(1, 0);
-      this.livesText.setDepth(100); // Always on top
+      this.livesText.setDepth(100);
 
       this.questionText = this.add.text(this.scale.width / 2, 100, '', {
         fontSize: '48px', fill: '#fff', align: 'center', wordWrap: { width: this.scale.width - 200 },
         backgroundColor: '#326BD0', padding: { x: 40, y: 30 }
       }).setOrigin(0.5);
-      this.questionText.setDepth(100); // Always on top
-        this.questionText.setDepth(100); // Always on top
+      this.questionText.setDepth(100);
 
         this.showQuestion();
       }
@@ -136,7 +157,7 @@ export default function GamePage() {
             color: '#fff'
           }).setOrigin(0.5);
           
-          block.setDepth(5); // Above bridge and background, but below HUD
+          block.setDepth(5);
 
           this.blocks.push(block);
 
@@ -206,24 +227,37 @@ export default function GamePage() {
   if (stage === "home") {
     return (
       <div className="flex flex-col justify-center items-center w-screen h-screen bg-white pt-20">
-        <h1 className="text-5xl font-bold mb-10 text-black">Kitty Quiz Runner</h1>
+        <h1 className="text-6xl font-bold mb-10 text-black">Kitty Quiz Runner</h1>
         <button
-          className="w-48 py-3 mb-4 bg-red-500 hover:bg-red-600 text-white font-semibold rounded-lg transition-colors"
+          className="w-64 py-5 mb-7 bg-[#326BD0] cursor-pointer hover:bg-[#12387D] text-white font-semibold text-2xl transition-colors"
           onClick={() => setStage("playing")}
         >
-          Start
+          START
         </button>
         <button
-          className="w-48 py-3 mb-4 bg-red-500 hover:bg-red-600 text-white font-semibold rounded-lg transition-colors"
+          className="w-64 py-5 mb-7 bg-[#326BD0] cursor-pointer hover:bg-[#12387D] text-white font-semibold text-2xl transition-colors"
           onClick={() => alert("Use ↑↓ to move and → to select the answer")}
         >
-          How to Play
+          HOW TO PLAY
         </button>
       </div>
     );
   }
 
-  if (stage === "playing") return <div id="game-container" className="w-screen h-screen"></div>;
+  if (stage === "playing") {
+    return (
+      <>
+        {isLoading && (
+          <div className="fixed inset-0 flex items-center justify-center bg-[#639BFF] z-50">
+            <div className="text-white text-6xl font-bold">
+              LOADING{dots}
+            </div>
+          </div>
+        )}
+        <div id="game-container" className="w-screen h-screen"></div>
+      </>
+    );
+  }
 
   if (stage === "result") {
     return (
@@ -233,20 +267,20 @@ export default function GamePage() {
         </h1>
         <p className="text-xl text-black mb-6">Score: {score}</p>
         <button
-          className="w-48 py-3 mb-4 bg-red-500 hover:bg-red-600 text-white font-semibold rounded-lg transition-colors"
+          className="w-64 py-5 mb-7 bg-[#326BD0] cursor-pointer hover:bg-[#12387D] text-white font-semibold text-2xl transition-colors"
           onClick={() => {
             setScore(0);
             setLives(3);
             setStage("playing");
           }}
         >
-          Play Again
+          PLAY AGAIN
         </button>
         <button
-          className="w-48 py-3 bg-red-500 hover:bg-red-600 text-white font-semibold rounded-lg transition-colors"
+          className="w-64 py-5 mb-7 bg-[#326BD0] cursor-pointer hover:bg-[#12387D] text-white font-semibold text-2xl  transition-colors"
           onClick={() => setStage("home")}
         >
-          Back to Home
+          BACK TO HOME
         </button>
       </div>
     );
