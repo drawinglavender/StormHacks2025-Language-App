@@ -116,15 +116,13 @@ export default function SettingsTab({
               onClick={exportHistory}
               className={`py-2 px-4 ${darkMode ? 'bg-gray-700 hover:bg-gray-600' : 'bg-gray-200 hover:bg-gray-300'} rounded-lg transition-colors flex items-center justify-center space-x-2`}
             >
-              <span>📥</span>
-              <span>Export History</span>
+              Export History
             </button>
             <button
               onClick={clearHistory}
               className={`py-2 px-4 ${darkMode ? 'bg-red-700 hover:bg-red-600' : 'bg-red-200 hover:bg-red-300'} text-red-100 rounded-lg transition-colors flex items-center justify-center space-x-2`}
             >
-              <span>🗑️</span>
-              <span>Clear History</span>
+              Clear History
             </button>
           </div>
         </div>
@@ -134,7 +132,7 @@ export default function SettingsTab({
           <h3 className="font-semibold mb-4">About</h3>
           <div className={`p-4 ${darkMode ? 'bg-gray-700' : 'bg-gray-50'} rounded-lg`}>
             <p className={`text-sm ${mutedColor} leading-relaxed mb-3`}>
-              This Cantonese translator uses ElevenLabs for speech-to-text and Gemini AI for translation. 
+              NativeLeap translator uses ElevenLabs for speech-to-text and Gemini AI for translation. 
               Record your voice to get instant Cantonese translations with vocabulary extraction.
             </p>
             <div className="flex items-center justify-between text-xs">

@@ -61,13 +61,13 @@ export default function FlashcardsTab({
             disabled={flashcards.length === 0}
             className="py-3 px-4 bg-blue-500 hover:bg-blue-600 disabled:bg-gray-400 disabled:cursor-not-allowed text-white font-medium rounded-lg transition-colors"
           >
-            📚 Study Mode
+            Study Mode
           </button>
           <button
             disabled={flashcards.length === 0}
             className="py-3 px-4 bg-green-500 hover:bg-green-600 disabled:bg-gray-400 disabled:cursor-not-allowed text-white font-medium rounded-lg transition-colors"
           >
-            🧠 Quiz Mode
+            Quiz Mode
           </button>
         </div>
         <p className={`text-sm ${mutedColor} mt-2 text-center`}>
