@@ -24,7 +24,7 @@ export default function TranslatePage() {
   const [translation, setTranslation] = useState<any>(null);
   const [history, setHistory] = useState<any[]>([]);
   const [flashcards, setFlashcards] = useState<any[]>([]);
-  const [darkMode, setDarkMode] = useState(true);
+  const [darkMode, setDarkMode] = useState(false);
   const [settings, setSettings] = useState({
     showJyutping: true,
     alternativeCount: 3,
