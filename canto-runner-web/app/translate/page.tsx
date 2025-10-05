@@ -1,15 +1,38 @@
 "use client";
 
 import { useState, useRef } from "react";
+import { Mic, Copy, Star, Download, History, BookOpen, Sun, Moon, Check } from 'lucide-react';
 import { speechToText } from "../../utils/elevenlabs";
+import { translateToCantonese } from "../../utils/translator";
+// Fixed paths - go up 2 levels from app/translate/ to root, then into components/translator/
+import TranslateTab from "../../components/translator/TranslateTab";
+import HistoryTab from "../../components/translator/HistoryTab";
+import FlashcardsTab from "../../components/translator/FlashcardsTab";
+import SettingsTab from "../../components/translator/SettingsTab";
 
 export default function TranslatePage() {
+  // Core state - KEEP THESE
   const [transcribedText, setTranscribedText] = useState("");
   const [isRecording, setIsRecording] = useState(false);
   const [isProcessing, setIsProcessing] = useState(false);
+  const [isTranslating, setIsTranslating] = useState(false); // NEW: separate state for translation
   const mediaRecorderRef = useRef<MediaRecorder | null>(null);
   const chunksRef = useRef<Blob[]>([]);
 
+  // UI state for styling only
+  const [activeTab, setActiveTab] = useState('translate');
+  const [translation, setTranslation] = useState<any>(null);
+  const [history, setHistory] = useState<any[]>([]);
+  const [flashcards, setFlashcards] = useState<any[]>([]);
+  const [darkMode, setDarkMode] = useState(true);
+  const [settings, setSettings] = useState({
+    showJyutping: true,
+    alternativeCount: 3,
+    speechLanguage: 'cantonese'
+  });
+  const [copied, setCopied] = useState(false);
+
+  // Recording functions - KEEP THESE
   const startRecording = async () => {
     try {
       const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
@@ -26,7 +49,7 @@ export default function TranslatePage() {
     } catch (error) {
       console.error("Recording failed:", error);
       const errorMessage = error instanceof Error ? error.message : "Unknown error occurred";
-      // You could add state to show this error to user if needed
+      setTranscribedText("Recording failed: " + errorMessage);
     }
   };
 
@@ -35,13 +58,11 @@ export default function TranslatePage() {
       mediaRecorderRef.current.onstop = async () => {
         const audioBlob = new Blob(chunksRef.current, { type: "audio/wav" });
 
-        console.log("Audio blob created:", { size: audioBlob.size, type: audioBlob.type });
-
         setIsProcessing(true);
         try {
           const text = await speechToText(audioBlob);
-          console.log("Transcription result:", text);
           setTranscribedText(text);
+          // REMOVED: Auto-translation - now user must click translate button
         } catch (error) {
           console.error("Transcription failed:", error);
           const errorMessage = error instanceof Error ? error.message : "Unknown error occurred";
@@ -50,8 +71,9 @@ export default function TranslatePage() {
           setIsProcessing(false);
         }
 
-        // Clean up
-        mediaRecorderRef.current?.stream.getTracks().forEach((track) => track.stop());
+        if (mediaRecorderRef.current?.stream) {
+          mediaRecorderRef.current.stream.getTracks().forEach((track) => track.stop());
+        }
       };
 
       mediaRecorderRef.current.stop();
@@ -59,35 +81,180 @@ export default function TranslatePage() {
     }
   };
 
+  // REMOVED: Auto-translate useEffect - now manual only
+  // useEffect(() => {
+  //   if (transcribedText && transcribedText.trim() && !transcribedText.includes("failed")) {
+  //     translateText();
+  //   }
+  // }, [transcribedText]);
+
+  // Translation function - MODIFIED: Now only runs when button is clicked
+  const translateText = async () => {
+    if (!transcribedText.trim() || transcribedText.includes("failed")) return;
+
+    setIsTranslating(true); // Use separate translation loading state
+    try {
+      const translatedText = await translateToCantonese(transcribedText);
+      
+      const newTranslation = {
+        id: Date.now(),
+        original: transcribedText,
+        translated: translatedText,
+        timestamp: new Date().toISOString(),
+        vocabulary: [],
+        alternatives: [],
+        favorite: false,
+        tags: []
+      };
+
+      setTranslation(newTranslation);
+      setHistory(prev => [newTranslation, ...prev]);
+    } catch (error) {
+      console.error('Translation failed:', error);
+      setTranslation({
+        id: Date.now(),
+        original: transcribedText,
+        translated: "Translation failed. Please try again.",
+        timestamp: new Date().toISOString(),
+        vocabulary: [],
+        alternatives: [],
+        favorite: false,
+        tags: []
+      });
+    } finally {
+      setIsTranslating(false); // Reset translation loading state
+    }
+  };
+
+  // UI helper functions
+  const copyToClipboard = (text: string) => {
+    navigator.clipboard.writeText(text);
+    setCopied(true);
+    setTimeout(() => setCopied(false), 2000);
+  };
+
+  const toggleFavorite = (id: number) => {
+    setHistory(prev => prev.map(item => 
+      item.id === id ? { ...item, favorite: !item.favorite } : item
+    ));
+    if (translation?.id === id) {
+      setTranslation((prev: any) => ({ ...prev, favorite: !prev.favorite }));
+    }
+  };
+
+  // Theme classes
+  const bgColor = darkMode ? 'bg-gray-900' : 'bg-gray-50';
+  const cardBg = darkMode ? 'bg-gray-800' : 'bg-white';
+  const textColor = darkMode ? 'text-gray-100' : 'text-gray-900';
+  const mutedColor = darkMode ? 'text-gray-400' : 'text-gray-600';
+  const borderColor = darkMode ? 'border-gray-700' : 'border-gray-200';
+
   return (
-    <div className="max-w-md mx-auto p-6">
-      <h1 className="text-2xl font-bold mb-6">Voice Transcriber</h1>
+    <div className={`min-h-screen ${bgColor} ${textColor} transition-colors duration-300`}>
+      {/* Header */}
+      <header className={`${cardBg} border-b ${borderColor} sticky top-0 z-50 backdrop-blur-lg bg-opacity-90`}>
+        <div className="max-w-7xl mx-auto px-4 py-4 flex items-center justify-between">
+          <div className="flex items-center space-x-3">
+            <div className="w-10 h-10 bg-gradient-to-br from-blue-500 to-purple-600 rounded-lg flex items-center justify-center">
+              <span className="text-white font-bold text-xl">粵</span>
+            </div>
+            <h1 className="text-2xl font-bold bg-gradient-to-r from-blue-500 to-purple-600 bg-clip-text text-transparent">
+              Cantonese Translator
+            </h1>
+          </div>
+          
+          <button
+            onClick={() => setDarkMode(!darkMode)}
+            className={`p-2 rounded-lg ${darkMode ? 'bg-gray-700 hover:bg-gray-600' : 'bg-gray-200 hover:bg-gray-300'} transition-colors`}
+          >
+            {darkMode ? <Sun className="w-5 h-5" /> : <Moon className="w-5 h-5" />}
+          </button>
+        </div>
+        
+        {/* Tabs */}
+        <div className="max-w-7xl mx-auto px-4">
+          <div className="flex space-x-1">
+            {['translate', 'saved', 'flashcards', 'settings'].map(tab => (
+              <button
+                key={tab}
+                onClick={() => setActiveTab(tab)}
+                className={`px-6 py-3 font-medium capitalize transition-all ${
+                  activeTab === tab
+                    ? darkMode 
+                      ? 'border-b-2 border-blue-500 text-blue-400' 
+                      : 'border-b-2 border-blue-600 text-blue-600'
+                    : mutedColor
+                }`}
+              >
+                {tab === 'translate' && '✨ Translate'}
+                {tab === 'saved' && '🕒 History'}
+                {tab === 'flashcards' && '📚 Flashcards'}
+                {tab === 'settings' && '⚙️ Settings'}
+              </button>
+            ))}
+          </div>
+        </div>
+      </header>
 
-      <div className="mb-4">
-        <button
-          onClick={isRecording ? stopRecording : startRecording}
-          disabled={isProcessing}
-          className={`w-full py-3 px-4 rounded text-white font-medium ${
-            isRecording
-              ? "bg-red-500 hover:bg-red-600"
-              : "bg-blue-500 hover:bg-blue-600"
-          } disabled:opacity-50`}
-        >
-          {isRecording ? "Stop Recording" : "Start Recording"}
-        </button>
-      </div>
+      <main className="max-w-7xl mx-auto px-4 py-8">
+        {activeTab === 'translate' && (
+          <TranslateTab
+            transcribedText={transcribedText}
+            setTranscribedText={setTranscribedText}
+            isRecording={isRecording}
+            isProcessing={isProcessing}
+            isTranslating={isTranslating} // NEW: Pass separate translation state
+            translation={translation}
+            copied={copied}
+            darkMode={darkMode}
+            cardBg={cardBg}
+            textColor={textColor}
+            mutedColor={mutedColor}
+            borderColor={borderColor}
+            startRecording={startRecording}
+            stopRecording={stopRecording}
+            translateText={translateText}
+            copyToClipboard={copyToClipboard}
+            toggleFavorite={toggleFavorite}
+          />
+        )}
 
-      {isProcessing && <p className="text-gray-600 mb-4">Processing audio...</p>}
+        {activeTab === 'saved' && (
+          <HistoryTab
+            history={history}
+            darkMode={darkMode}
+            cardBg={cardBg}
+            textColor={textColor}
+            mutedColor={mutedColor}
+            borderColor={borderColor}
+            toggleFavorite={toggleFavorite}
+          />
+        )}
 
-      <div className="mt-4">
-        <label className="block text-sm font-medium mb-2">Transcription:</label>
-        <textarea
-          value={transcribedText}
-          readOnly
-          className="w-full h-32 p-3 border rounded resize-none"
-          placeholder="Your speech will appear here..."
-        />
-      </div>
+        {activeTab === 'flashcards' && (
+          <FlashcardsTab
+            flashcards={flashcards}
+            settings={settings}
+            darkMode={darkMode}
+            cardBg={cardBg}
+            textColor={textColor}
+            mutedColor={mutedColor}
+            borderColor={borderColor}
+          />
+        )}
+
+        {activeTab === 'settings' && (
+          <SettingsTab
+            settings={settings}
+            setSettings={setSettings}
+            darkMode={darkMode}
+            cardBg={cardBg}
+            textColor={textColor}
+            mutedColor={mutedColor}
+            borderColor={borderColor}
+          />
+        )}
+      </main>
     </div>
   );
 }

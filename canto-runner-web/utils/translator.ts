@@ -1,18 +1,19 @@
-import { GoogleGenerativeAI } from "@google/generative-ai";
+import { generateText } from "./gemini";
 
-const genAI = new GoogleGenerativeAI(process.env.GOOGLE_API_KEY!);
-
-export async function translateToCantonese(englishText: string) {
+export async function translateToCantonese(text: string): Promise<string> {
+  const prompt = `Translate the following text to Cantonese (Traditional Chinese). ` +
+    `The input text may contain multiple languages mixed together. ` +
+    `Translate all content into natural, conversational Hong Kong-style Cantonese. ` +
+    `Use Traditional Chinese characters only in the first line. ` +
+    `Include Jyutping romanization below line of Chinese character text. ` +
+    `Preserve the original meaning and context. ` +
+    `Return only the Cantonese translation with Jyutping (not ping yin), nothing else: "${text}"`;
+  
   try {
-    const model = genAI.getGenerativeModel({ model: "gemini-pro" });
-    const prompt = `Translate the following English text to Cantonese (include both Chinese characters and jyutping romanization):
-    English: "${englishText}"`;
-
-    const result = await model.generateContent(prompt);
-    const response = await result.response;
-    return response.text();
+    const translation = await generateText(prompt);
+    return translation.trim();
   } catch (error) {
-    console.error('Translation Error:', error);
-    throw error;
+    console.error("Translation failed:", error);
+    throw new Error("Translation service unavailable");
   }
 }
