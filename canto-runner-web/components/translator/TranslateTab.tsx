@@ -1,5 +1,5 @@
 import React from 'react';
-import { Mic, Copy, Star, Download, Check } from 'lucide-react';
+import { Mic, Copy, Star, Download, Check, Play } from 'lucide-react';
 
 function parseTranslationOutput(text: string) {
   const sections = {
@@ -172,9 +172,10 @@ export default function TranslateTab({
         <button
           onClick={translateText}
           disabled={!transcribedText.trim() || isTranslating || transcribedText.includes("failed")}
-          className="w-full mt-4 py-3 bg-gradient-to-r from-blue-500 to-purple-600 hover:from-blue-600 hover:to-purple-700 text-white font-semibold rounded-lg transition-all disabled:opacity-50 disabled:cursor-not-allowed shadow-lg hover:shadow-xl"
+          className="w-full mt-4 py-3 bg-gradient-to-r from-[#639BFF] to-[#326BD0] hover:from-[#326BD0] hover:to-[#12387D] text-white font-semibold rounded-lg transition-all disabled:opacity-50 disabled:cursor-not-allowed shadow-lg hover:shadow-xl"
+
         >
-          {isTranslating ? 'Translating...' : 'Translate ✨'}
+          {isTranslating ? 'Translating...' : 'Translate'}
         </button>
       </div>
 
@@ -272,9 +273,14 @@ export default function TranslateTab({
         ) : (
           <div className="h-full flex items-center justify-center min-h-[400px]">
             <div className="text-center">
-              <div className="w-16 h-16 mx-auto mb-4 bg-gray-200 dark:bg-gray-700 rounded-full flex items-center justify-center">
-                <span className="text-2xl">🧠</span>
-              </div>
+
+            <button
+              onClick={isRecording ? stopRecording : startRecording}
+              className="w-20 h-20 mx-auto mb-4 bg-gradient-to-br from-[#639BFF] to-[#326BD0] rounded-full flex items-center justify-center shadow-md hover:shadow-xl transition-all"
+            >
+              <Mic className="w-8 h-8 text-white" />
+            </button>
+
               <p className={mutedColor}>
                 {isTranslating ? 'Translating...' : 'Enter text to translate'}
               </p>
